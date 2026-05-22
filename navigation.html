@@ -3,736 +3,1521 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>响应式导航网站</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <title>🎨 ColorMind AI - 配色参考生成器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* 自定义样式 */
-        html {
-            scroll-behavior: smooth;
+        /* ==================== CSS 变量 ==================== */
+        :root {
+            --bg-primary: #e0f7fa;
+            --bg-secondary: #b2ebf2;
+            --bg-card: rgba(255, 255, 255, 0.55);
+            --bg-card-hover: rgba(255, 255, 255, 0.75);
+            --accent: #0097a7;
+            --accent-light: #00bcd4;
+            --accent-dark: #00838f;
+            --accent-glow: rgba(0, 151, 167, 0.3);
+            --text-primary: #1a2a3a;
+            --text-secondary: #4a6a7a;
+            --text-muted: #8aa0b0;
+            --border-glass: rgba(255, 255, 255, 0.4);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
+            --shadow-xl: 0 16px 60px rgba(0, 0, 0, 0.15);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-sans: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --nav-height: 64px;
+            --github-works-url: 'https://raw.githubusercontent.com/用户名/repo/main/data/works.json';
         }
-        
+
+        /* ==================== 重置 ==================== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
         }
-        
-        .sidebar {
-            transition: transform 0.3s ease-in-out;
+
+        /* 背景网格 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                linear-gradient(135deg, rgba(0, 188, 212, 0.03) 0%, transparent 50%),
+                linear-gradient(225deg, rgba(0, 151, 167, 0.04) 0%, transparent 50%),
+                repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(0, 151, 167, 0.04) 49px, rgba(0, 151, 167, 0.04) 50px),
+                repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(0, 151, 167, 0.04) 49px, rgba(0, 151, 167, 0.04) 50px);
+            pointer-events: none;
+            z-index: 0;
         }
-        
-        .sidebar.active {
+
+        /* ==================== 导航栏 ==================== */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: var(--nav-height);
+            background: rgba(224, 247, 250, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            transition: var(--transition);
+        }
+        .navbar.scrolled {
+            background: rgba(224, 247, 250, 0.92);
+            box-shadow: var(--shadow-sm);
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-dark);
+            text-decoration: none;
+            letter-spacing: 0.02em;
+        }
+        .nav-logo .logo-icon {
+            font-size: 1.5rem;
+        }
+        /* ==================== 主容器 ==================== */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: calc(var(--nav-height) + 2rem) 1.5rem 2rem;
+        }
+
+        /* ==================== Hero 区域 ==================== */
+        .hero {
+            text-align: center;
+            padding: 3rem 0 2rem;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.8s ease forwards;
+        }
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-dark), var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .hero-subtitle {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            margin-bottom: 2rem;
+        }
+
+        /* ==================== 输入区域 ==================== */
+        .input-section {
+            display: flex;
+            gap: 0.75rem;
+            max-width: 700px;
+            margin: 0 auto 1rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.8s ease 0.15s forwards;
+        }
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        .input-wrapper input {
+            width: 100%;
+            height: 52px;
+            padding: 0 1.25rem;
+            border: 2px solid var(--border-glass);
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            font-size: 1rem;
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition);
+            font-family: var(--font-sans);
+        }
+        .input-wrapper input::placeholder {
+            color: var(--text-muted);
+        }
+        .input-wrapper input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+        .generate-btn {
+            height: 52px;
+            padding: 0 2rem;
+            border: none;
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            font-family: var(--font-sans);
+            position: relative;
+            overflow: hidden;
+        }
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+        .generate-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .generate-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .generate-btn .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        .generate-btn.loading .spinner { display: block; }
+        .generate-btn.loading .btn-text { display: none; }
+        .generate-btn.loading .btn-icon { display: none; }
+
+        /* ==================== AI 生成结果 ==================== */
+        .ai-result {
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            display: none;
+        }
+        .ai-result.visible { display: block; }
+        .ai-result-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent-dark);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .ai-result-header i { font-size: 1.1rem; }
+        .ai-palette-row {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .ai-color-item {
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.5);
+            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .ai-color-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: var(--shadow-md);
+            margin: 0 auto 0.4rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .ai-color-circle:hover {
+            transform: scale(1.15);
+            box-shadow: var(--shadow-lg);
+        }
+        .ai-color-hex {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        /* ==================== 风格标签行 ==================== */
+        .style-hint {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeUp 0.6s ease 0.25s forwards;
+        }
+        .style-tag-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            animation: fadeUp 0.6s ease 0.35s forwards;
+        }
+        .style-mini-tag {
+            padding: 0.35rem 1rem;
+            border: 1px solid var(--border-glass);
+            border-radius: 50px;
+            background: var(--bg-card);
+            backdrop-filter: blur(8px);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font-sans);
+        }
+        .style-mini-tag:hover, .style-mini-tag.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        /* ==================== 风格卡片网格 ==================== */
+        .section-title-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: fadeUp 0.6s ease 0.4s forwards;
+        }
+        .section-title-row h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .section-title-row .line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--accent-glow), transparent);
+        }
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 3rem;
+        }
+
+        /* ==================== 风格卡片 ==================== */
+        .style-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateY(40px);
+            position: relative;
+            overflow: hidden;
+        }
+        .style-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            opacity: 0;
+            transition: var(--transition);
+        }
+        .style-card:hover {
+            transform: translateY(-6px);
+            background: var(--bg-card-hover);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-light);
+        }
+        .style-card:hover::before { opacity: 1; }
+        .style-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .style-card-icon {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .style-card-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        .style-card-en {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .style-card-colors {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 0.75rem;
+        }
+        .style-card-color-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: var(--transition);
+        }
+        .style-card:hover .style-card-color-dot {
+            transform: scale(1.1);
+        }
+        .style-card-desc {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .style-card-arrow {
+            position: absolute;
+            right: 1.25rem;
+            bottom: 1.25rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: var(--transition);
+        }
+        .style-card:hover .style-card-arrow {
+            opacity: 1;
             transform: translateX(0);
         }
-        
-        .card {
-            transition: all 0.3s ease;
+
+        /* ==================== 模态窗 ==================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.35s ease;
         }
-        
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-        }
-        
-        .nav-link.active {
-            background-color: #3b82f6;
-            color: white;
-        }
-        
-        .tab-active {
-            border-bottom-color: #3b82f6;
-            color: #3b82f6;
-        }
-        
-        .overlay {
-            transition: opacity 0.3s ease;
-        }
-        
-        .overlay.active {
+        .modal-overlay.active {
+            display: flex;
             opacity: 1;
-            visibility: visible;
         }
-        
-        /* 滚动条样式 */
-        ::-webkit-scrollbar {
-            width: 6px;
+        .modal {
+            background: #fff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 880px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            transform: scale(0.85);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
         }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+        .modal-overlay.active .modal {
+            transform: scale(1);
+            opacity: 1;
         }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
+        .modal-close {
+            position: sticky;
+            top: 1rem;
+            float: right;
+            margin-right: 1rem;
+            margin-top: 1rem;
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.06);
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
         }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a1a1a1;
+        .modal-close:hover {
+            background: #ff5252;
+            color: #fff;
+            transform: rotate(90deg);
         }
+        .modal-header {
+            padding: 2rem 2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .modal-icon {
+            font-size: 2.5rem;
+        }
+        .modal-title-group h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .modal-title-group p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .modal-body {
+            padding: 1.5rem 2rem 2rem;
+        }
+        .palette-group-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-dark);
+            margin-bottom: 0.75rem;
+            margin-top: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .palette-group-title:first-child { margin-top: 0; }
+        .palette-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .palette-color {
+            text-align: center;
+            flex: 1;
+            min-width: 60px;
+        }
+        .palette-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: var(--shadow-md);
+            margin: 0 auto 0.3rem;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+        .palette-dot:hover {
+            transform: scale(1.2);
+            box-shadow: var(--shadow-lg);
+        }
+        .palette-dot .copied-tip {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .palette-dot .copied-tip.show { opacity: 1; }
+        .palette-hex {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        /* 他人作品 */
+        .works-section {
+            margin-top: 2rem;
+            border-top: 1px solid rgba(0,0,0,0.06);
+            padding-top: 1.5rem;
+        }
+        .works-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .works-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        .work-card {
+            background: #f8fffe;
+            border: 1px solid rgba(0,151,167,0.1);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .work-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        .work-img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #b2ebf2, #e0f7fa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 2rem;
+        }
+        .work-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .work-info {
+            padding: 0.75rem 1rem;
+        }
+        .work-info h4 {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+        }
+        .work-info span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .work-palette-mini {
+            display: flex;
+            gap: 3px;
+            margin-top: 0.4rem;
+        }
+        .work-palette-mini span {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1.5px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .works-loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .works-loading i {
+            animation: spin 1s linear infinite;
+        }
+        .works-empty {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* ==================== 设置面板 ==================== */
+        .settings-panel {
+            position: fixed;
+            top: 0; right: -400px;
+            width: 380px;
+            max-width: 90vw;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -8px 0 40px rgba(0,0,0,0.12);
+            z-index: 300;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .settings-panel.open { right: 0; }
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        .settings-header h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .settings-close {
+            width: 34px;
+            height: 34px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.05);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .settings-close:hover { background: #ff5252; color: #fff; }
+        .settings-group {
+            margin-bottom: 1.5rem;
+        }
+        .settings-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        .settings-input {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 2px solid rgba(0,0,0,0.08);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition);
+            font-family: var(--font-sans);
+        }
+        .settings-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .settings-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+            line-height: 1.4;
+        }
+        .settings-save {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font-sans);
+        }
+        .settings-save:hover {
+            box-shadow: 0 6px 24px var(--accent-glow);
+            transform: translateY(-1px);
+        }
+        .settings-success {
+            color: #4caf50;
+            font-size: 0.82rem;
+            margin-top: 0.5rem;
+            display: none;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .settings-success.show { display: flex; }
+        .settings-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.25);
+            z-index: 250;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .settings-backdrop.show { display: block; opacity: 1; }
+
+        /* ==================== 页脚 ==================== */
+        .footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 2.5rem 1.5rem;
+            border-top: 1px solid rgba(0,151,167,0.1);
+            margin-top: 2rem;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .footer-link:hover { color: var(--accent); }
+        .footer-copy {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .footer-deploy-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.5;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+        .footer-deploy-hint i {
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        /* ==================== Toast ==================== */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(26, 42, 58, 0.92);
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.88rem;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ==================== 动画 ==================== */
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* ==================== 响应式 ==================== */
+        @media (max-width: 900px) {
+            .style-grid { grid-template-columns: repeat(2, 1fr); }
+            .works-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .container { padding: calc(var(--nav-height) + 1rem) 1rem 1rem; }
+            .hero-title { font-size: 1.8rem; }
+            .hero-subtitle { font-size: 0.9rem; }
+            .input-section { flex-direction: column; }
+            .generate-btn { width: 100%; justify-content: center; }
+            .style-grid { grid-template-columns: 1fr; }
+            .modal-header { padding: 1.5rem 1.25rem 0; }
+            .modal-body { padding: 1rem 1.25rem 1.5rem; }
+            .modal { border-radius: 16px; }
+            .navbar { padding: 0 1rem; }
+            .nav-logo span { display: none; }
+            .ai-color-circle { width: 44px; height: 44px; }
+            .palette-dot { width: 38px; height: 38px; }
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,151,167,0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,151,167,0.4); }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- 汉堡菜单按钮 -->
-    <button id="menu-btn" class="fixed top-4 left-4 z-50 md:hidden bg-white shadow-lg p-2 rounded-lg hover:bg-gray-100 transition-colors">
-        <i class="fa fa-bars text-gray-700"></i>
-    </button>
+<body>
 
-    <!-- 遮罩层 -->
-    <div id="overlay" class="overlay fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+    <!-- 导航栏 -->
+    <nav class="navbar" id="navbar">
+        <a class="nav-logo" href="#">
+            <span class="logo-icon">🎨</span>
+            <span>ColorMind AI</span>
+        </a>
+    </nav>
 
-    <!-- 左侧导航栏 -->
-    <aside id="sidebar" class="sidebar fixed left-0 top-0 h-screen w-64 bg-white shadow-lg z-50 transform -translate-x-full md:translate-x-0">
-        <!-- Logo -->
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center">
-                <i class="fa fa-compass text-blue-500 text-2xl"></i>
-                <span class="ml-3 text-xl font-bold text-gray-800">导航中心</span>
-            </div>
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <h1 class="hero-title">🎨 AI 配色参考生成器</h1>
+            <p class="hero-subtitle">描述你的灵感，AI 为你生成专业配色方案</p>
         </div>
-        
-        <!-- 导航按钮 -->
-        <nav class="p-4">
-            <ul class="space-y-2">
-                <li>
-                    <a href="#category1" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-all">
-                        <i class="fa fa-home mr-3"></i>
-                        <span>首页导航</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#category2" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-all">
-                        <i class="fa fa-briefcase mr-3"></i>
-                        <span>工作工具</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#category3" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-all">
-                        <i class="fa fa-graduation-cap mr-3"></i>
-                        <span>学习资源</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#category4" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-all">
-                        <i class="fa fa-shopping-cart mr-3"></i>
-                        <span>购物消费</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#category5" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-all">
-                        <i class="fa fa-gamepad mr-3"></i>
-                        <span>娱乐休闲</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </aside>
 
-    <!-- 右侧内容区 -->
-    <main class="md:ml-64 min-h-screen">
-        <!-- 顶部搜索区 -->
-        <header class="sticky top-0 bg-white shadow-sm z-30">
-            <div class="max-w-6xl mx-auto px-4 py-4">
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <!-- 搜索引擎切换 -->
-                    <div class="flex items-center">
-                        <select id="search-engine" class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <option value="baidu">百度</option>
-                            <option value="google">Google</option>
-                            <option value="bing">必应</option>
-                        </select>
-                    </div>
-                    
-                    <!-- 搜索输入框 -->
-                    <div class="flex-1 relative">
-                        <input 
-                            type="text" 
-                            id="search-input"
-                            placeholder="搜索..." 
-                            class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                        <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <button id="search-btn" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white px-4 py-1 rounded-lg hover:bg-blue-600 transition-colors">
-                            搜索
-                        </button>
-                    </div>
-                </div>
+        <!-- 输入区 -->
+        <div class="input-section">
+            <div class="input-wrapper">
+                <input type="text" id="promptInput" placeholder="描述你想要的配色感觉，如：夏日柠檬气泡水、森林清晨薄雾…" maxlength="100">
             </div>
-        </header>
-
-        <!-- 内容展示区 -->
-        <div class="max-w-6xl mx-auto px-4 py-8">
-            <!-- 分类1：首页导航 -->
-            <section id="category1" class="mb-12">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                    <i class="fa fa-home text-blue-500 mr-3"></i>
-                    首页导航
-                </h2>
-                
-                <!-- 二级分类标签 -->
-                <div class="flex border-b border-gray-200 mb-6">
-                    <button class="tab-btn tab-active px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab1-1">综合门户</button>
-                    <button class="tab-btn px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab1-2">新闻资讯</button>
-                </div>
-                
-                <!-- 卡片网格 -->
-                <div class="tab-content" id="tab1-1">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <a href="https://www.baidu.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-search text-blue-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">百度</h3>
-                                    <p class="text-sm text-gray-500">全球最大的中文搜索引擎</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.qq.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-comment text-blue-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">腾讯网</h3>
-                                    <p class="text-sm text-gray-500">腾讯旗下综合门户网站</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.sina.com.cn" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-newspaper-o text-red-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">新浪网</h3>
-                                    <p class="text-sm text-gray-500">领先的中文门户网站</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="tab-content hidden" id="tab1-2">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <a href="https://news.qq.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-newspaper-o text-blue-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">腾讯新闻</h3>
-                                    <p class="text-sm text-gray-500">最新新闻资讯</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://news.sina.com.cn" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-newspaper-o text-red-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">新浪新闻</h3>
-                                    <p class="text-sm text-gray-500">全天候新闻报道</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.xinhuanet.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-globe text-red-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">新华网</h3>
-                                    <p class="text-sm text-gray-500">权威新闻发布平台</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 分类2：工作工具 -->
-            <section id="category2" class="mb-12">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                    <i class="fa fa-briefcase text-blue-500 mr-3"></i>
-                    工作工具
-                </h2>
-                
-                <div class="flex border-b border-gray-200 mb-6">
-                    <button class="tab-btn tab-active px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab2-1">办公协作</button>
-                    <button class="tab-btn px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab2-2">开发工具</button>
-                </div>
-                
-                <div class="tab-content" id="tab2-1">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <a href="https://docs.google.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-file-text text-blue-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">Google Docs</h3>
-                                    <p class="text-sm text-gray-500">在线文档编辑</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.trello.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-list-checks text-purple-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">Trello</h3>
-                                    <p class="text-sm text-gray-500">项目管理工具</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://slack.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-comments text-purple-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">Slack</h3>
-                                    <p class="text-sm text-gray-500">团队协作沟通</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="tab-content hidden" id="tab2-2">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <a href="https://github.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-github text-white text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">GitHub</h3>
-                                    <p class="text-sm text-gray-500">代码托管平台</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://codepen.io" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-code text-white text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">CodePen</h3>
-                                    <p class="text-sm text-gray-500">前端代码演示</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://jsfiddle.net" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-code text-white text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">JSFiddle</h3>
-                                    <p class="text-sm text-gray-500">在线代码测试</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 分类3：学习资源 -->
-            <section id="category3" class="mb-12">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                    <i class="fa fa-graduation-cap text-blue-500 mr-3"></i>
-                    学习资源
-                </h2>
-                
-                <div class="flex border-b border-gray-200 mb-6">
-                    <button class="tab-btn tab-active px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab3-1">在线课程</button>
-                    <button class="tab-btn px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab3-2">技术文档</button>
-                </div>
-                
-                <div class="tab-content" id="tab3-1">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <a href="https://www.coursera.org" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-graduation-cap text-green-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">Coursera</h3>
-                                    <p class="text-sm text-gray-500">全球名校课程</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.edx.org" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-university text-blue-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">edX</h3>
-                                    <p class="text-sm text-gray-500">顶尖学府在线课程</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.udemy.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-book text-purple-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">Udemy</h3>
-                                    <p class="text-sm text-gray-500">海量在线课程</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="tab-content hidden" id="tab3-2">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <a href="https://developer.mozilla.org" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-code text-orange-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">MDN Web Docs</h3>
-                                    <p class="text-sm text-gray-500">Web开发权威文档</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://docs.python.org" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-code text-blue-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">Python Docs</h3>
-                                    <p class="text-sm text-gray-500">Python官方文档</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://react.dev" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-code text-cyan-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">React Docs</h3>
-                                    <p class="text-sm text-gray-500">React官方文档</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 分类4：购物消费 -->
-            <section id="category4" class="mb-12">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                    <i class="fa fa-shopping-cart text-blue-500 mr-3"></i>
-                    购物消费
-                </h2>
-                
-                <div class="flex border-b border-gray-200 mb-6">
-                    <button class="tab-btn tab-active px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab4-1">综合电商</button>
-                    <button class="tab-btn px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab4-2">生鲜食品</button>
-                </div>
-                
-                <div class="tab-content" id="tab4-1">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <a href="https://www.taobao.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-shopping-bag text-orange-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">淘宝</h3>
-                                    <p class="text-sm text-gray-500">一站式购物平台</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.jd.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-truck text-red-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">京东</h3>
-                                    <p class="text-sm text-gray-500">正品低价快速配送</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.pinduoduo.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-users text-yellow-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">拼多多</h3>
-                                    <p class="text-sm text-gray-500">社交电商新选择</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="tab-content hidden" id="tab4-2">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <a href="https://www.meituan.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-utensils text-yellow-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">美团</h3>
-                                    <p class="text-sm text-gray-500">美食外卖平台</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.ele.me" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-utensils text-blue-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">饿了么</h3>
-                                    <p class="text-sm text-gray-500">外卖订餐服务</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://fresh.taobao.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-leaf text-green-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">淘宝生鲜</h3>
-                                    <p class="text-sm text-gray-500">新鲜直达</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 分类5：娱乐休闲 -->
-            <section id="category5" class="mb-12">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                    <i class="fa fa-gamepad text-blue-500 mr-3"></i>
-                    娱乐休闲
-                </h2>
-                
-                <div class="flex border-b border-gray-200 mb-6">
-                    <button class="tab-btn tab-active px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab5-1">视频娱乐</button>
-                    <button class="tab-btn px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab5-2">游戏平台</button>
-                </div>
-                
-                <div class="tab-content" id="tab5-1">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <a href="https://www.youtube.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-play text-red-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">YouTube</h3>
-                                    <p class="text-sm text-gray-500">全球最大视频平台</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.bilibili.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-play-circle text-pink-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">哔哩哔哩</h3>
-                                    <p class="text-sm text-gray-500">年轻人喜爱的视频社区</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://v.qq.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-video text-blue-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">腾讯视频</h3>
-                                    <p class="text-sm text-gray-500">海量影视内容</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="tab-content hidden" id="tab5-2">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <a href="https://www.steam.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-gamepad text-blue-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">Steam</h3>
-                                    <p class="text-sm text-gray-500">全球最大游戏平台</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.epicgames.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-gamepad text-white text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">Epic Games</h3>
-                                    <p class="text-sm text-gray-500">免费游戏领取平台</p>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="https://www.wegame.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
-                            <div class="flex">
-                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fa fa-gamepad text-green-500 text-xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="font-semibold text-gray-800">WeGame</h3>
-                                    <p class="text-sm text-gray-500">腾讯游戏平台</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </section>
+            <button class="generate-btn" id="generateBtn">
+                <span class="spinner"></span>
+                <i class="fas fa-wand-magic-sparkles btn-icon"></i>
+                <span class="btn-text">生成配色</span>
+            </button>
         </div>
-    </main>
 
-    <!-- JavaScript -->
+        <!-- 风格快捷选择 -->
+        <div class="style-hint">💡 点击选择风格，或直接输入描述生成</div>
+        <div class="style-tag-row" id="styleTagRow"></div>
+
+        <!-- AI 生成结果 -->
+        <div class="ai-result" id="aiResult">
+            <div class="ai-result-header">
+                <i class="fas fa-sparkles"></i>
+                <span>AI 为你生成的配色方案</span>
+            </div>
+            <div class="ai-palette-row" id="aiPaletteRow"></div>
+        </div>
+
+        <!-- 风格卡片区域 -->
+        <div class="section-title-row">
+            <h2>🎨 风格配色参考</h2>
+            <div class="line"></div>
+        </div>
+        <div class="style-grid" id="styleGrid"></div>
+    </div>
+
+    <!-- 模态窗 -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modal">
+            <button class="modal-close" id="modalClose"><i class="fas fa-xmark"></i></button>
+            <div class="modal-header" id="modalHeader"></div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="settings-backdrop" id="settingsBackdrop"></div>
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h3><i class="fas fa-cog"></i> 设置</h3>
+            <button class="settings-close" id="settingsClose"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="settings-group">
+            <label class="settings-label">Trae API Key</label>
+            <input class="settings-input" id="apiKeyInput" type="password" placeholder="输入你的 Trae API Key">
+            <p class="settings-hint">用于调用 AI 配色生成接口。未配置时将使用内置模拟生成。</p>
+        </div>
+        <div class="settings-group">
+            <label class="settings-label">GitHub 作品数据地址</label>
+            <input class="settings-input" id="githubUrlInput" type="text" placeholder="https://raw.githubusercontent.com/...">
+            <p class="settings-hint">填写 works.json 的 raw 链接，用于加载他人作品数据。</p>
+        </div>
+        <button class="settings-save" id="settingsSave">保存设置</button>
+        <div class="settings-success" id="settingsSuccess">
+            <i class="fas fa-check-circle"></i> 设置已保存
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a class="footer-link" href="https://github.com" target="_blank" rel="noopener">
+                <i class="fab fa-github"></i> GitHub
+            </a>
+            <a class="footer-link" href="#" id="footerDataLink">
+                <i class="fas fa-database"></i> 查看后台数据
+            </a>
+        </div>
+        <p class="footer-copy">© 2025 ColorMind AI. All rights reserved.</p>
+        <p class="footer-deploy-hint">
+            <i class="fas fa-circle-info"></i>
+            本页面可部署到 GitHub Pages，后台数据通过提交 JSON 至仓库实现更新，访问仓库即可查看全部数据。
+        </p>
+    </footer>
+
     <script>
-        // DOM元素
-        const menuBtn = document.getElementById('menu-btn');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        const navLinks = document.querySelectorAll('.nav-link');
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const searchBtn = document.getElementById('search-btn');
-        const searchInput = document.getElementById('search-input');
-        const searchEngine = document.getElementById('search-engine');
-
-        // 汉堡菜单切换
-        menuBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-            overlay.classList.toggle('hidden');
-        });
-
-        // 点击遮罩层关闭侧边栏
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-            overlay.classList.add('hidden');
-        });
-
-        // 点击侧边栏导航链接关闭侧边栏（移动端）
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
-                    overlay.classList.remove('active');
-                    overlay.classList.add('hidden');
-                }
-            });
-        });
-
-        // Tab切换功能
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // 移除所有tab的激活状态
-                tabBtns.forEach(b => b.classList.remove('tab-active'));
-                // 隐藏所有tab内容
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.add('hidden');
-                });
-                
-                // 添加当前tab的激活状态
-                btn.classList.add('tab-active');
-                
-                // 显示对应tab内容
-                const tabId = btn.getAttribute('data-tab');
-                document.getElementById(tabId).classList.remove('hidden');
-            });
-        });
-
-        // 搜索功能
-        searchBtn.addEventListener('click', performSearch);
-        searchInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                performSearch();
+        /* ====================================================================
+           数据定义
+           ==================================================================== */
+        const STYLES = [
+            {
+                id: 'morandi',
+                name: '莫兰迪色系',
+                en: 'Morandi',
+                icon: '🌫️',
+                desc: '低饱和度的高级灰调，温柔克制，充满文艺气息',
+                preview: ['#b8a9c9', '#c2b59b', '#9aafb5'],
+                palettes: [
+                    { name: '晨雾花园', colors: ['#b8a9c9', '#c2b59b', '#9aafb5', '#d4c5a9', '#a8b5a0'] },
+                    { name: '暖调时光', colors: ['#c9b1a0', '#b5a88e', '#c2a894', '#a89b8e', '#d1bca8'] },
+                    { name: '静谧蓝调', colors: ['#8fa3b0', '#a7b5c0', '#96a8ae', '#b0bac2', '#8d9ea8'] },
+                    { name: '粉灰梦境', colors: ['#c4a8ad', '#b8a0a0', '#c9b2b0', '#a89898', '#d0bfc0'] },
+                    { name: '橄榄低语', colors: ['#a0a88e', '#98a590', '#b0b8a0', '#8d9680', '#a8b098'] }
+                ]
+            },
+            {
+                id: 'sweetcool',
+                name: '甜酷色系',
+                en: 'Sweet & Cool',
+                icon: '🍬',
+                desc: '甜美的粉色与酷感深色碰撞，少女感与个性并存',
+                preview: ['#ff6b9d', '#c44dff', '#2d1b69'],
+                palettes: [
+                    { name: '霓虹糖果', colors: ['#ff6b9d', '#c44dff', '#2d1b69', '#ff85a1', '#7b2ff7'] },
+                    { name: '午夜玫瑰', colors: ['#e84393', '#6c5ce7', '#2d1b69', '#fd79a8', '#a29bfe'] },
+                    { name: '蜜桃星空', colors: ['#fab1a0', '#6c5ce7', '#2d1b69', '#ff7675', '#74b9ff'] },
+                    { name: '浆果气泡', colors: ['#e056a0', '#8b5cf6', '#1a1145', '#f472b6', '#a78bfa'] },
+                    { name: '甜心朋克', colors: ['#ff4da6', '#7c3aed', '#0f0a2a', '#fb7185', '#818cf8'] }
+                ]
+            },
+            {
+                id: 'chinese',
+                name: '古风色系',
+                en: 'Chinese Classical',
+                icon: '🏮',
+                desc: '传统中国色彩，典雅庄重，蕴含千年东方美学',
+                preview: ['#8b2500', '#c19a6b', '#5b7065'],
+                palettes: [
+                    { name: '朱墙琉璃', colors: ['#8b2500', '#c19a6b', '#5b7065', '#d4a017', '#2f4f4f'] },
+                    { name: '烟雨江南', colors: ['#6b7b8d', '#a0b8a0', '#c8b896', '#4a6670', '#d6c8a8'] },
+                    { name: '水墨丹青', colors: ['#2c2c2c', '#8c8c8c', '#d0d0d0', '#4a4a4a', '#b0b0b0'] },
+                    { name: '落日长河', colors: ['#c23616', '#e1b12c', '#8e6b3e', '#d35400', '#a67c52'] },
+                    { name: '青瓷薄荷', colors: ['#5f9ea0', '#b0c4b1', '#6b8e6b', '#8fbc8f', '#a2c4a0'] }
+                ]
+            },
+            {
+                id: 'macaron',
+                name: '马卡龙色系',
+                en: 'Macaron',
+                icon: '🧁',
+                desc: '柔和的冰淇淋色调，清新甜美，令人心情愉悦',
+                preview: ['#ffb3ba', '#baffc9', '#bae1ff'],
+                palettes: [
+                    { name: '草莓花园', colors: ['#ffb3ba', '#ffd4dc', '#ffc8cb', '#ffa8b0', '#ffe0e5'] },
+                    { name: '薄荷绿洲', colors: ['#baffc9', '#c8f7dc', '#a0f0b8', '#d4ffe0', '#8ce8a8'] },
+                    { name: '天空之城', colors: ['#bae1ff', '#c8e8ff', '#a0d4ff', '#d4f0ff', '#8cc8ff'] },
+                    { name: '薰衣草田', colors: ['#d4baff', '#e0ccff', '#c0a0ff', '#e8d8ff', '#b090ff'] },
+                    { name: '柠檬芝士', colors: ['#ffffba', '#fff8cc', '#ffee99', '#fffde0', '#ffe880'] }
+                ]
+            },
+            {
+                id: 'earth',
+                name: '大地色系',
+                en: 'Earth Tones',
+                icon: '🍂',
+                desc: '泥土与森林的温暖色调，质朴自然，沉稳可靠',
+                preview: ['#8b6914', '#556b2f', '#a0522d'],
+                palettes: [
+                    { name: '秋日暖阳', colors: ['#8b6914', '#a0522d', '#cd853f', '#d2b48c', '#8b7355'] },
+                    { name: '森林秘境', colors: ['#556b2f', '#6b8e23', '#8fbc8f', '#2e4a2e', '#7ca87c'] },
+                    { name: '陶土记忆', colors: ['#a0522d', '#cd853f', '#deb887', '#8b4513', '#d2691e'] },
+                    { name: '沙漠黄昏', colors: ['#c19a6b', '#d4a76a', '#e8c888', '#a08050', '#f0d8a8'] },
+                    { name: '苔藓低语', colors: ['#6b6b3a', '#8a8a50', '#a0a060', '#4a4a20', '#b0b070'] }
+                ]
+            },
+            {
+                id: 'cyberpunk',
+                name: '赛博朋克色系',
+                en: 'Cyberpunk',
+                icon: '🌃',
+                desc: '霓虹闪烁的未来都市，高对比度的科技感配色',
+                preview: ['#00fff5', '#ff003c', '#7b00ff'],
+                palettes: [
+                    { name: '霓虹都市', colors: ['#00fff5', '#ff003c', '#7b00ff', '#00ff88', '#ff6600'] },
+                    { name: '电子梦境', colors: ['#ff00ff', '#00ffff', '#ffff00', '#ff0080', '#00ff00'] },
+                    { name: '暗黑科技', colors: ['#0a0a2e', '#1a1a4e', '#00fff5', '#ff003c', '#4a0080'] },
+                    { name: '虚拟空间', colors: ['#7b00ff', '#ff003c', '#00fff5', '#ff6600', '#00ff88'] },
+                    { name: '光棱碎片', colors: ['#ff0080', '#00ff80', '#8000ff', '#ff8000', '#0080ff'] }
+                ]
             }
-        });
+        ];
 
-        function performSearch() {
-            const query = searchInput.value.trim();
-            if (!query) return;
-            
-            const engine = searchEngine.value;
-            let url = '';
-            
-            switch(engine) {
-                case 'baidu':
-                    url = `https://www.baidu.com/s?wd=${encodeURIComponent(query)}`;
-                    break;
-                case 'google':
-                    url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-                    break;
-                case 'bing':
-                    url = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
-                    break;
-            }
-            
-            window.open(url, '_blank');
+        const FALLBACK_WORKS = [
+            { style: 'morandi', title: '静物 · 陶罐', author: '小鹿', image: '', palette: ['#b8a9c9', '#c2b59b', '#9aafb5'] },
+            { style: 'cyberpunk', title: '霓虹东京', author: 'NeonArtist', image: '', palette: ['#00fff5', '#ff003c', '#7b00ff'] },
+            { style: 'macaron', title: '甜品海报', author: '糖小朵', image: '', palette: ['#ffb3ba', '#baffc9', '#bae1ff'] },
+            { style: 'chinese', title: '水墨山水', author: '墨染', image: '', palette: ['#2c2c2c', '#8c8c8c', '#d0d0d0'] }
+        ];
+
+        /* ====================================================================
+           DOM 引用
+           ==================================================================== */
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => document.querySelectorAll(sel);
+
+        const promptInput = $('#promptInput');
+        const generateBtn = $('#generateBtn');
+        const styleTagRow = $('#styleTagRow');
+        const styleGrid = $('#styleGrid');
+        const aiResult = $('#aiResult');
+        const aiPaletteRow = $('#aiPaletteRow');
+        const modalOverlay = $('#modalOverlay');
+        const modal = $('#modal');
+        const modalClose = $('#modalClose');
+        const modalHeader = $('#modalHeader');
+        const modalBody = $('#modalBody');
+        const settingsPanel = $('#settingsPanel');
+        const settingsBackdrop = $('#settingsBackdrop');
+        const settingsClose = $('#settingsClose');
+        const settingsSave = $('#settingsSave');
+        const settingsSuccess = $('#settingsSuccess');
+        const apiKeyInput = $('#apiKeyInput');
+        const githubUrlInput = $('#githubUrlInput');
+        const footerDataLink = $('#footerDataLink');
+        const toastEl = $('#toast');
+
+        /* ====================================================================
+           状态
+           ==================================================================== */
+        let selectedStyleId = '';
+        let githubWorksCache = null;
+
+        /* ====================================================================
+           工具函数
+           ==================================================================== */
+        function showToast(msg, duration = 2500) {
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            setTimeout(() => toastEl.classList.remove('show'), duration);
         }
 
-        // 滚动监听（Scroll Spy）
-        const sections = document.querySelectorAll('section');
-        
-        function highlightNavLink() {
-            const scrollPosition = window.scrollY + 150;
-            
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop;
-                const sectionHeight = section.offsetHeight;
-                const sectionId = section.getAttribute('id');
-                
-                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-                    navLinks.forEach(link => {
-                        link.classList.remove('active');
-                        if (link.getAttribute('href') === `#${sectionId}`) {
-                            link.classList.add('active');
-                        }
+        function hexToHsl(hex) {
+            hex = hex.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16) / 255;
+            const g = parseInt(hex.substring(2, 4), 16) / 255;
+            const b = parseInt(hex.substring(4, 6), 16) / 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h = 0, s = 0, l = (max + min) / 2;
+            if (max !== min) {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+                else if (max === g) h = ((b - r) / d + 2) / 6;
+                else h = ((r - g) / d + 4) / 6;
+            }
+            return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+        }
+
+        function hslToHex(h, s, l) {
+            s /= 100; l /= 100;
+            const a = s * Math.min(l, 1 - l);
+            const f = (n) => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+
+        function getConfig(key, fallback) {
+            return localStorage.getItem('colormind_' + key) || fallback;
+        }
+        function setConfig(key, value) {
+            localStorage.setItem('colormind_' + key, value);
+        }
+
+        /* ====================================================================
+           模拟 AI 生成
+           ==================================================================== */
+        function mockGenerate(prompt, styleId) {
+            const style = STYLES.find(s => s.id === styleId);
+            let baseColors;
+            if (style) {
+                const palette = style.palettes[Math.floor(Math.random() * style.palettes.length)];
+                baseColors = [...palette.colors];
+            } else {
+                const keywords = prompt.toLowerCase();
+                if (keywords.includes('夏') || keywords.includes('柠') || keywords.includes('阳')) {
+                    baseColors = ['#ffd700', '#ff8c00', '#32cd32', '#00bfff', '#ff6b6b'];
+                } else if (keywords.includes('夜') || keywords.includes('星') || keywords.includes('月')) {
+                    baseColors = ['#1a1a2e', '#16213e', '#0f3460', '#533483', '#e94560'];
+                } else if (keywords.includes('花') || keywords.includes('春') || keywords.includes('粉')) {
+                    baseColors = ['#ffb6c1', '#ff69b4', '#db7093', '#ffc0cb', '#ff1493'];
+                } else if (keywords.includes('海') || keywords.includes('蓝') || keywords.includes('水')) {
+                    baseColors = ['#006994', '#40e0d0', '#00ced1', '#20b2aa', '#5f9ea0'];
+                } else if (keywords.includes('秋') || keywords.includes('红') || keywords.includes('暖')) {
+                    baseColors = ['#b7410e', '#cd853f', '#a0522d', '#d2691e', '#f4a460'];
+                } else {
+                    const hue = Math.random() * 360;
+                    baseColors = Array.from({ length: 5 }, (_, i) => {
+                        const h = (hue + i * 45 + (Math.random() - 0.5) * 30) % 360;
+                        const s = 50 + Math.random() * 35;
+                        const l = 35 + Math.random() * 35;
+                        return hslToHex(h, s, l);
                     });
                 }
+            }
+            return baseColors.map(hex => {
+                const [h, s, l] = hexToHsl(hex);
+                const nh = h + (Math.random() - 0.5) * 15;
+                const ns = Math.max(10, Math.min(100, s + (Math.random() - 0.5) * 20));
+                const nl = Math.max(15, Math.min(85, l + (Math.random() - 0.5) * 15));
+                return hslToHex(nh, ns, nl);
             });
         }
 
-        window.addEventListener('scroll', highlightNavLink);
-        highlightNavLink(); // 初始化
+        /* ====================================================================
+           AI 生成（真实 API + Fallback）
+           ==================================================================== */
+        async function generatePalette(prompt, styleId) {
+            const apiKey = getConfig('apiKey', '');
+            if (apiKey) {
+                try {
+                    const resp = await fetch('https://api.trae.ai/v1/generate-palette', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            prompt: prompt,
+                            style: styleId || '',
+                            count: 5
+                        })
+                    });
+                    if (!resp.ok) throw new Error('API error ' + resp.status);
+                    const data = await resp.json();
+                    if (data.palette && Array.isArray(data.palette) && data.palette.length > 0) {
+                        return data.palette;
+                    }
+                    throw new Error('Invalid response');
+                } catch (e) {
+                    console.warn('API 调用失败，使用模拟生成:', e.message);
+                }
+            }
+            await new Promise(r => setTimeout(r, 800 + Math.random() * 600));
+            return mockGenerate(prompt, styleId);
+        }
 
-        // 平滑滚动到指定区域
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetId = link.getAttribute('href');
-                const targetElement = document.querySelector(targetId);
-                
-                if (targetElement) {
-                    targetElement.scrollIntoView({ behavior: 'smooth' });
+        /* ====================================================================
+           渲染风格快捷标签
+           ==================================================================== */
+        function renderStyleTags() {
+            styleTagRow.innerHTML = STYLES.map(s =>
+                `<button class="style-mini-tag" data-style="${s.id}">${s.icon} ${s.name}</button>`
+            ).join('');
+            styleTagRow.addEventListener('click', e => {
+                const tag = e.target.closest('.style-mini-tag');
+                if (!tag) return;
+                $$('.style-mini-tag').forEach(t => t.classList.remove('active'));
+                const sid = tag.dataset.style;
+                if (selectedStyleId === sid) {
+                    selectedStyleId = '';
+                } else {
+                    selectedStyleId = sid;
+                    tag.classList.add('active');
                 }
             });
-        });
+        }
+
+        /* ====================================================================
+           渲染风格卡片
+           ==================================================================== */
+        function renderStyleCards() {
+            styleGrid.innerHTML = STYLES.map((s, i) => `
+                <div class="style-card" data-style="${s.id}" style="transition-delay: ${i * 0.08}s">
+                    <div class="style-card-icon">${s.icon}</div>
+                    <div class="style-card-name">${s.name}</div>
+                    <div class="style-card-en">${s.en}</div>
+                    <div class="style-card-colors">
+                        ${s.preview.map(c => `<div class="style-card-color-dot" style="background:${c}"></div>`).join('')}
+                    </div>
+                    <div class="style-card-desc">${s.desc}</div>
+                    <div class="style-card-arrow"><i class="fas fa-arrow-right"></i></div>
+                </div>
+            `).join('');
+
+            /* 卡片入场动画：Intersection Observer */
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+            $$('.style-card').forEach(card => observer.observe(card));
+
+            /* 卡片点击 */
+            styleGrid.addEventListener('click', e => {
+                const card = e.target.closest('.style-card');
+                if (!card) return;
+                openStyleModal(card.dataset.style);
+            });
+        }
+
+        /* ====================================================================
+           加载 GitHub 作品数据
+           ==================================================================== */
+        async function loadGithubWorks() {
+            if (githubWorksCache) return githubWorksCache;
+            const url = getConfig('githubUrl', '');
+            if (!url) {
+                githubWorksCache = FALLBACK_WORKS;
+                return githubWorksCache;
+            }
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    githubWorksCache = data;
+                    return data;
+                }
+                throw new Error('Empty data');
+            } catch (e) {
+                console.warn('加载 GitHub 作品失败，使用内置数据:', e.message);
+                githubWorksCache = FALLBACK_WORKS;
+                return githubWorksCache;
+            }
+        }
+
+        /* ====================================================================
+           打开风格详情模态窗
+           ==================================================================== */
+        async function openStyleModal(styleId) {
+            const style = STYLES.find(s => s.id === styleId);
+            if (!style) return;
+
+            modalHeader.innerHTML = `
+                <span class="modal-icon">${style.icon}</span>
+                <div class="modal-title-group">
+                    <h2>${style.name}</h2>
+                    <p>${style.en} — ${style.desc}</p>
+                </div>
+            `;
+
+            let palettesHtml = style.palettes.map((pg, gi) => `
+                <div class="palette-group-title"><i class="fas fa-palette"></i> ${pg.name}</div>
+                <div class="palette-group">
+                    ${pg.colors.map(c => `
+                        <div class="palette-color">
+                            <div class="palette-dot" style="background:${c}" data-hex="${c}" title="点击复制色号">
+                                <span class="copied-tip">已复制!</span>
+                            </div>
+                            <div class="palette-hex">${c.toUpperCase()}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+
+            /* 作品区 */
+            let worksHtml = `
+                <div class="works-section">
+                    <div class="works-title"><i class="fas fa-images"></i> 他人作品参考</div>
+                    <div class="works-loading" id="worksLoading"><i class="fas fa-spinner"></i> 加载作品中…</div>
+                    <div class="works-grid" id="worksGridInner" style="display:none"></div>
+                    <div class="works-empty" id="worksEmpty" style="display:none">暂无该风格的作品数据</div>
+                </div>
+            `;
+
+            modalBody.innerHTML = palettesHtml + worksHtml;
+            openModal();
+
+            /* 加载作品 */
+            const works = await loadGithubWorks();
+            const filtered = works.filter(w => w.style === styleId);
+            const loadingEl = $('#worksLoading');
+            const gridEl = $('#worksGridInner');
+            const emptyEl = $('#worksEmpty');
+
+            loadingEl.style.display = 'none';
+            if (filtered.length === 0) {
+                emptyEl.style.display = 'block';
+            } else {
+                gridEl.style.display = 'grid';
+                gridEl.innerHTML = filtered.map(w => {
+                    const imgHtml = w.image
+                        ? `<div class="work-img"><img src="${w.image}" alt="${w.title}" loading="lazy"></div>`
+                        : `<div class="work-img"><i class="fas fa-image"></i></div>`;
+                    const miniPalette = (w.palette || []).slice(0, 5).map(c =>
+                        `<span style="background:${c}"></span>`
+                    ).join('');
+                    return `
+                        <div class="work-card">
+                            ${imgHtml}
+                            <div class="work-info">
+                                <h4>${w.title || '未命名作品'}</h4>
+                                <span>by ${w.author || '匿名'}</span>
+                                <div class="work-palette-mini">${miniPalette}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            /* 色号复制 */
+            modalBody.querySelectorAll('.palette-dot').forEach(dot => {
+                dot.addEventListener('click', () => {
+                    const hex = dot.dataset.hex;
+                    navigator.clipboard.writeText(hex).then(() => {
+                        const tip = dot.querySelector('.copied-tip');
+                        tip.classList.add('show');
+                        setTimeout(() => tip.classList.remove('show'), 1000);
+                        showToast(`已复制 ${hex.toUpperCase()}`);
+                    }).catch(() => {
+                        showToast(`色号: ${hex.toUpperCase()}`);
+                    });
+                });
+            });
+        }
+
+        /* ====================================================================
+           模态窗开关
+           ==================================================================== */
+        function openModal() {
+            modalOverlay.style.display = 'flex';
+            requestAnimationFrame(() => {
+                modalOverlay.classList.add('active');
+            });
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            setTimeout(() => {
+                modalOverlay.style.display = 'none';
+                modalBody.innerHTML = '';
+            }, 350);
+            document.body.style.overflow = '';
+        }
+
+        /* ====================================================================
+           生成按钮事件
+           ==================================================================== */
+        async function handleGenerate() {
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+                showToast('请输入配色描述');
+                promptInput.focus();
+                return;
+            }
+            generateBtn.classList.add('loading');
+            generateBtn.disabled = true;
+
+            try {
+                const colors = await generatePalette(prompt, selectedStyleId);
+                aiResult.classList.add('visible');
+                aiPaletteRow.innerHTML = '';
+                colors.forEach((c, i) => {
+                    const item = document.createElement('div');
+                    item.className = 'ai-color-item';
+                    item.style.animationDelay = `${i * 0.1}s`;
+                    item.innerHTML = `
+                        <div class="ai-color-circle" style="background:${c}" data-hex="${c}" title="点击复制"></div>
+                        <div class="ai-color-hex">${c.toUpperCase()}</div>
+                    `;
+                    item.querySelector('.ai-color-circle').addEventListener('click', () => {
+                        navigator.clipboard.writeText(c).then(() => {
+                            showToast(`已复制 ${c.toUpperCase()}`);
+                        }).catch(() => showToast(`色号: ${c.toUpperCase()}`));
+                    });
+                    aiPaletteRow.appendChild(item);
+                });
+            } catch (e) {
+                showToast('生成失败，请重试');
+            } finally {
+                generateBtn.classList.remove('loading');
+                generateBtn.disabled = false;
+            }
+        }
+
+        /* ====================================================================
+           设置面板
+           ==================================================================== */
+        function openSettings() {
+            settingsPanel.classList.add('open');
+            settingsBackdrop.classList.add('show');
+            apiKeyInput.value = getConfig('apiKey', '');
+            githubUrlInput.value = getConfig('githubUrl', '');
+        }
+        function closeSettings() {
+            settingsPanel.classList.remove('open');
+            settingsBackdrop.classList.remove('show');
+        }
+
+        /* ====================================================================
+           初始化 & 事件绑定
+           ==================================================================== */
+        function init() {
+            renderStyleTags();
+            renderStyleCards();
+
+            generateBtn.addEventListener('click', handleGenerate);
+            promptInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') handleGenerate();
+            });
+
+            modalClose.addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', e => {
+                if (e.target === modalOverlay) closeModal();
+            });
+
+            settingsClose.addEventListener('click', closeSettings);
+            settingsBackdrop.addEventListener('click', closeSettings);
+
+            settingsSave.addEventListener('click', () => {
+                setConfig('apiKey', apiKeyInput.value.trim());
+                setConfig('githubUrl', githubUrlInput.value.trim());
+                githubWorksCache = null;
+                settingsSuccess.classList.add('show');
+                setTimeout(() => settingsSuccess.classList.remove('show'), 2000);
+                showToast('设置已保存');
+            });
+
+            window.addEventListener('scroll', () => {
+                const navbar = $('#navbar');
+                if (window.scrollY > 40) navbar.classList.add('scrolled');
+                else navbar.classList.remove('scrolled');
+            });
+
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') {
+                    if (settingsPanel.classList.contains('open')) closeSettings();
+                    else if (modalOverlay.classList.contains('active')) closeModal();
+                }
+            });
+
+            const ghUrl = getConfig('githubUrl', '');
+            if (ghUrl) {
+                try {
+                    const u = new URL(ghUrl);
+                    const repoPath = u.pathname.split('/').slice(1, 3).join('/');
+                    footerDataLink.href = `https://github.com/${repoPath}/tree/main/data`;
+                } catch (e) { /* ignore */ }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
